@@ -1,17 +1,18 @@
 # Development Standards Repository
 
-This repository contains coding standards, deployment strategies, templates, and examples for consistent development practices across projects.
+This repository contains coding standards, deployment strategies, templates, database, and examples for consistent development practices across projects.
 
 ## 📁 Folder Structure
 
 ```
 dev-standards/
+├── database/
+│   └── postgresql/
+│       ├── setup/
+│       ├── migrations/
+│       ├── backup-restore/
+│       └── performance-tuning/
 ├── deployment/
-│   ├── postgresql/
-│   │   ├── setup/
-│   │   ├── migrations/
-│   │   ├── backup-restore/
-│   │   └── performance-tuning/
 │   ├── docker/
 │   │   ├── best-practices.md
 │   │   ├── multi-stage-builds/
@@ -115,8 +116,10 @@ dev-standards/
 
 ## 📋 Contents Overview
 
-### 🚀 Deployment
+### Database
 - **PostgreSQL**: Database setup, migrations, backup strategies, and performance tuning
+
+### 🚀 Deployment
 - **Docker**: Container best practices, multi-stage builds, and security guidelines
 - **Kubernetes**: Deployment manifests, Helm charts, and monitoring setup
 

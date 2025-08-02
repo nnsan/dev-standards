@@ -1,0 +1,197 @@
+openapi: 3.0.3
+info:
+  title: Employee Service API
+  description: RESTful API for employee management
+  version: 1.0.0
+  contact:
+    name: API Support
+    email: api-support@company.com
+servers:
+  - url: http://localhost:3000/v1
+    description: Development server
+  - url: https://api.company.com/v1
+    description: Production server
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  
+  schemas:
+    Employee:
+      type: object
+      required:
+        - employee_id
+        - first_name
+        - last_name
+        - email
+        - hire_date
+      properties:
+        id:
+          type: string
+          format: uuid
+          example: "123e4567-e89b-12d3-a456-426614174000"
+        employee_id:
+          type: string
+          pattern: "^[A-Z]{3}[0-9]{3}$"
+          example: "EMP001"
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: "John"
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+          example: "Doe"
+        email:
+          type: string
+          format: email
+          example: "john.doe@company.com"
+        employment_status:
+          type: string
+          enum: ["active", "inactive", "terminated"]
+          default: "active"
+        hire_date:
+          type: string
+          format: date
+          example: "2024-01-15"
+        created_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          example: "2024-01-15T10:30:00Z"
+
+    CreateEmployeeRequest:
+      type: object
+      required:
+        - employee_id
+        - first_name
+        - last_name
+        - email
+        - hire_date
+      properties:
+        employee_id:
+          type: string
+          pattern: "^[A-Z]{3}[0-9]{3}$"
+        first_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        last_name:
+          type: string
+          minLength: 1
+          maxLength: 100
+        email:
+          type: string
+          format: email
+        department_id:
+          type: string
+          format: uuid
+          nullable: true
+        position:
+          type: string
+          maxLength: 100
+          nullable: true
+        hire_date:
+          type: string
+          format: date
+
+    ApiError:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: "VALIDATION_ERROR"
+            message:
+              type: string
+              example: "Invalid input data"
+            details:
+              type: array
+              items:
+                type: object
+                properties:
+                  field:
+                    type: string
+                  message:
+                    type: string
+
+paths:
+  /employees:
+    get:
+      summary: List employees
+      description: Retrieve a paginated list of employees with optional filtering
+      tags:
+        - Employees
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Employee'
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                      per_page:
+                        type: integer
+                      total:
+                        type: integer
+                      total_pages:
+                        type: integer
+    
+    post:
+      summary: Create employee
+      description: Create a new employee
+      tags:
+        - Employees
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeRequest'
+      responses:
+        '201':
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  data:
+                    $ref: '#/components/schemas/Employee'

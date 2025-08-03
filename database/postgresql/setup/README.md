@@ -140,6 +140,10 @@ GRANT USAGE ON SCHEMA public TO app_user;
 GRANT CREATE ON SCHEMA public TO app_user;
 ```
 
+**DDL Naming Convention:**
+- Use **lowercase** for field types and DDL variable types: `uuid`, `varchar`, `timestamp`, `boolean`
+- Use **UPPERCASE** for PostgreSQL keywords and functions: `CREATE TABLE`, `PRIMARY KEY`, `REFERENCES`, `NOT NULL`
+
 ### User Permissions
 ```sql
 -- init-scripts/02-setup-permissions.sql

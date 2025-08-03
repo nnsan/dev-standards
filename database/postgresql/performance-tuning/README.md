@@ -212,6 +212,45 @@ ALTER TABLE employees SET (autovacuum_vacuum_scale_factor = 0.1);
 ALTER TABLE employees SET (autovacuum_analyze_scale_factor = 0.05);
 ```
 
+## Audit Trail Implementation
+
+### Automatic Audit Triggers
+Use PostgreSQL triggers to automatically populate `_hist` tables:
+
+```sql
+-- Audit trigger function template
+CREATE OR REPLACE FUNCTION fn_{table}_audit_trigger()
+RETURNS TRIGGER AS $$
+BEGIN
+    IF TG_OP = 'INSERT' THEN
+        INSERT INTO {table}_hist (..., operation, changed_by, changed_at)
+        VALUES (NEW.*, 'INSERT', NEW.updated_by, CURRENT_TIMESTAMP);
+        RETURN NEW;
+    ELSIF TG_OP = 'UPDATE' THEN
+        INSERT INTO {table}_hist (..., operation, changed_by, changed_at)
+        VALUES (NEW.*, 'UPDATE', NEW.updated_by, CURRENT_TIMESTAMP);
+        RETURN NEW;
+    ELSIF TG_OP = 'DELETE' THEN
+        INSERT INTO {table}_hist (..., operation, changed_by, changed_at)
+        VALUES (OLD.*, 'DELETE', OLD.updated_by, CURRENT_TIMESTAMP);
+        RETURN OLD;
+    END IF;
+    RETURN NULL;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Create trigger
+CREATE TRIGGER trigger_{table}_audit
+    AFTER INSERT OR UPDATE OR DELETE ON {table}
+    FOR EACH ROW EXECUTE FUNCTION fn_{table}_audit_trigger();
+```
+
+**Benefits:**
+- **Automatic**: No application code needed
+- **Consistent**: All changes captured
+- **Performance**: Minimal overhead
+- **Reliable**: Database-level guarantee
+
 ## Best Practices
 
 1. **Avoid CASCADE**: Use explicit CTE-based deletions
@@ -222,3 +261,5 @@ ALTER TABLE employees SET (autovacuum_analyze_scale_factor = 0.05);
 6. **Cursor Pagination**: Avoid OFFSET for large datasets
 7. **Bulk Operations**: Use batch inserts/updates when possible
 8. **Partial Indexes**: For frequently filtered columns
+9. **Audit Triggers**: Use database triggers for automatic audit trails
+9. **DDL Naming Convention**: Use lowercase for field types (`uuid`, `varchar`, `timestamp`) and UPPERCASE for PostgreSQL keywords (`CREATE TABLE`, `PRIMARY KEY`, `REFERENCES`)

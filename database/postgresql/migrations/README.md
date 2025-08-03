@@ -121,9 +121,41 @@ databaseChangeLog:
 
 1. **Separate Concerns**: Keep table definitions separate from database objects
 2. **Dependency Order**: Create tables before dependent objects (triggers, views)
-3. **Rollback Strategy**: Always include rollback statements where possible
-4. **Testing**: Test migrations on development environment first
-5. **Documentation**: Include comments explaining complex changes
+3. **Group Related Changes**: Combine related database objects in single changesets
+4. **Rollback Strategy**: Always include rollback statements where possible
+5. **Testing**: Test migrations on development environment first
+6. **Documentation**: Include comments explaining complex changes
+
+### Changeset Grouping Guidelines
+
+**Group together:**
+- Related audit triggers (all `*_audit` triggers)
+- Related views that depend on same tables
+- Related functions that work together
+- Permission grants for same role
+
+**Keep separate:**
+- Table creation (different changeset per table group)
+- Functions with different purposes
+- Objects with different rollback requirements
+
+**Example:**
+```yaml
+# ✅ Good - Group related audit triggers
+- changeSet:
+    id: audit_triggers
+    changes:
+      - sqlFile: trigger_employees_audit.sql
+      - sqlFile: trigger_competencies_audit.sql
+      - sqlFile: trigger_assignments_audit.sql
+
+# ❌ Avoid - Separate changesets for each trigger
+- changeSet:
+    id: trigger_employees_audit
+- changeSet:
+    id: trigger_competencies_audit
+```
+6. **DDL Naming Convention**: Use lowercase for field types and DDL variable types (e.g., `uuid`, `varchar`, `timestamp`). Use uppercase for PostgreSQL keywords and functions (e.g., `CREATE TABLE`, `PRIMARY KEY`, `REFERENCES`)
 
 ## Folder Structure
 
@@ -160,13 +192,47 @@ db-schema/
 2. **Version Control**: Modify `.001` files freely until release, then create `.002`
 3. **Release Discipline**: Never modify released table files
 4. **Dependency Order**: Create tables before dependent objects
-5. **Group Related Changes**: Include multiple related tables in one changeSet for logical grouping and dependency management
+5. **One Table Per File**: Each table gets its own DDL file
+6. **Separate Audit Tables**: Audit tables (`*_hist`) must be in separate files from main tables
+7. **Group Related Changes**: Include multiple related tables in one changeSet for logical grouping and dependency management
+
+### File Separation Rules
+
+**One Table Per File:**
+- Each table definition goes in its own file
+- Never mix multiple table definitions in one file
+- Audit tables separated from main tables
+
+**Example Structure:**
+```
+tables/
+├── employees.001.sql           # Main table only
+├── employees_hist.001.sql      # Audit table only
+├── assignments.001.sql         # Main table only
+└── assignments_hist.001.sql    # Audit table only
+```
+
+**Changeset Organization:**
+```yaml
+databaseChangeLog:
+  - changeSet:
+      id: core_tables.001
+      changes:
+        - sqlFile: tables/employees.001.sql
+        - sqlFile: tables/assignments.001.sql
+  - changeSet:
+      id: audit_tables.001
+      changes:
+        - sqlFile: tables/employees_hist.001.sql
+        - sqlFile: tables/assignments_hist.001.sql
+```
 
 ### Database Object Management
 1. **Always Deployable**: Set `runOnChange="true"` for all database objects
 2. **CREATE OR REPLACE**: Use replaceable syntax for functions, views, procedures
 3. **Drop and Recreate**: For triggers, use DROP IF EXISTS then CREATE
 4. **Single Responsibility**: One object per file
+5. **Variable Naming**: Use `p_` prefix for input parameters and `l_` prefix for local variables
 
 ### General Rules
 1. **Version Control**: All migration files must be committed to version control
